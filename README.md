@@ -1,36 +1,133 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 👻 GhostChat — Anonymous Ephemeral Messaging Platform
 
-## Getting Started
+GhostChat is a production-ready, privacy-first, temporary messaging web application built with **Next.js 15 (App Router)**, **TypeScript**, **Tailwind CSS**, **MongoDB Atlas**, **Ably Realtime Messaging**, **AWS S3 / Cloudflare R2 Storage**, and **PWA (Progressive Web App)** support.
 
-First, run the development server:
+---
+
+## ✨ Features
+
+### 🔒 1. Ephemeral & Privacy-First
+- **Zero Registration Required**: Guests can create and join temporary chat rooms instantly without providing an email or phone number.
+- **72-Hour Auto-Purge**: Chats automatically expire after 3 days. All messages, participant data, and uploaded media are completely erased from MongoDB and S3/R2 storage via an automated cleanup engine.
+- **Strict Personal & Group Capacity**: Personal chats are atomically limited to 2 participants. Group chats support configurable limits from 10 to 100 members.
+
+### ⚡ 2. Realtime Messaging & Read Receipts
+- **Ably Realtime WebSockets**: Sub-second message delivery, realtime typing indicators, and presence updates.
+- **3-Level Tick System**:
+  - **1 Tick (✓)**: Sent to server.
+  - **2 Ticks (✓✓)**: Delivered to recipient.
+  - **3 Ticks (✓✓✓)**: Viewed/Read in cyan checkmarks.
+- **Audio & System Notifications**: Built-in Web Audio notification chime and native system notifications when the app or browser window is minimized.
+
+### 📷 3. Rich Media & Direct S3 Storage
+- **Native Mobile Camera**: Direct camera capture support (`capture="environment"`).
+- **Voice Notes**: Native audio recording with dynamic playback waveforms.
+- **Organized Storage Hierarchy**: Server-side direct uploads stored under `ghostchat/<chatFolder>/<date>/<file>`.
+
+### 👤 4. Optional User Accounts & Security
+- **Unique Usernames**: Enforced unique account registration.
+- **6-Digit Recovery Security Code**: Generated on registration for password resets.
+- **Forgot Password Flow**: Recover accounts using your 6-digit code or default fallback `123456`.
+- **Dedicated Account Settings (`/account`)**: Manage profile, change password, or permanently delete account.
+- **Single Auth Sidebar Footer**: Clean, unified auth & account toggle in the left sidebar.
+
+### 📱 5. Responsive PWA & Web App
+- **Installable PWA**: Includes web app manifest, custom service worker (`sw.js`), and install prompt.
+- **Full-Width Active Feed**: Modern 3-column layout (Left Sidebar, Active Chat Feed, Right Group Info Panel).
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer | Technology |
+|---|---|
+| **Framework** | Next.js 15 (App Router) |
+| **Language** | TypeScript |
+| **Styling** | Tailwind CSS & Vanilla CSS Glassmorphism |
+| **Database** | MongoDB Atlas |
+| **Realtime** | Ably WebSockets SDK |
+| **Storage** | AWS S3 / Cloudflare R2 |
+| **Validation** | Zod Schema Validation |
+| **Testing** | Node.js Test Runner |
+
+---
+
+## 🚀 Getting Started
+
+### 1. Prerequisites
+- Node.js 18+ installed
+- MongoDB Atlas cluster URI
+- Ably API key (Free tier from [ably.com](https://ably.com))
+- AWS S3 bucket or Cloudflare R2 credentials
+
+### 2. Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Clone repository
+git clone https://github.com/your-username/ghostchat.git
+cd ghostchat
+
+# Install dependencies
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Environment Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Copy `env.example` to `.env.local`:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+cp env.example .env.local
+```
 
-## Learn More
+Configure your environment variables in `.env.local`:
 
-To learn more about Next.js, take a look at the following resources:
+```env
+# MongoDB Connection
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/ghostchat?retryWrites=true&w=majority
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Application Base URL
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Ably Realtime Key
+ABLY_API_KEY=your_ably_api_key
 
-## Deploy on Vercel
+# AWS S3 / Cloudflare R2 Credentials
+FILESYSTEM_DISK=s3
+S3_ACCESS_KEY_ID=your_access_key
+S3_SECRET_ACCESS_KEY=your_secret_key
+S3_REGION=us-east-1
+S3_BUCKET=your_bucket_name
+S3_ENDPOINT=https://your_bucket.s3.us-east-1.amazonaws.com
+S3_CLOUDFRONT_URL=https://your_cloudfront_domain.cloudfront.net
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Session Secret
+SESSION_SECRET=your_super_secret_32_character_string
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 4. Running the App
+
+```bash
+# Run Development Server
+npm run dev
+
+# Open in Browser
+http://localhost:3000
+```
+
+---
+
+## 🧪 Testing & Verification
+
+```bash
+# Run TypeScript compilation check
+npx tsc --noEmit
+
+# Run Unit Test Suite
+npm test
+```
+
+---
+
+## 📜 License
+
+MIT License. Built for privacy, speed, and temporary communication.
