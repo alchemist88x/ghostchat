@@ -82,17 +82,29 @@ export async function POST(req: NextRequest, { params }: RouteProps) {
       );
     }
 
-    // Check if user is already a participant in this chat
+    // Check if user is already a participant in this chat (by sessionHash or account credentials)
+    const orConditions: Record<string, unknown>[] = [{ sessionHash }];
+    if (currentUser) {
+      if (currentUser.id) orConditions.push({ userId: currentUser.id });
+      if (currentUser.username) orConditions.push({ username: currentUser.username });
+    }
+
     const existingParticipant = await participantsCol.findOne({
       chatId: chatIdStr,
-      sessionHash,
+      $or: orConditions,
     });
 
     if (existingParticipant) {
-      // User is already a participant, allow resuming conversation
+      // User is already a participant, allow resuming conversation and sync sessionHash
       await participantsCol.updateOne(
         { _id: existingParticipant._id },
-        { $set: { lastSeenAt: new Date() } }
+        {
+          $set: {
+            sessionHash,
+            lastSeenAt: new Date(),
+            ...(currentUser ? { userId: currentUser.id, username: currentUser.username } : {}),
+          },
+        }
       );
 
       return NextResponse.json({
@@ -154,6 +166,8 @@ export async function POST(req: NextRequest, { params }: RouteProps) {
       joinedAt: now,
       lastSeenAt: now,
       sessionHash,
+      userId: currentUser?.id,
+      username: currentUser?.username,
     };
 
     const insertResult = await participantsCol.insertOne(newParticipant);

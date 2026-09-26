@@ -19,6 +19,7 @@ import { ChatSidebar } from "@/components/chat/ChatSidebar";
 import { GroupInfoPanel } from "@/components/chat/GroupInfoPanel";
 import { UserAuthModal } from "@/components/auth/UserAuthModal";
 import { ManagedChatsDrawer } from "@/components/auth/ManagedChatsDrawer";
+import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 
 interface ChatPageProps {
   params: Promise<{ chatId: string }>;
@@ -83,6 +84,23 @@ export default function ChatPage({ params }: ChatPageProps) {
   const [managedDrawerOpen, setManagedDrawerOpen] = useState(false);
   const [showGroupInfo, setShowGroupInfo] = useState(true);
   const [showSidebarMobile, setShowSidebarMobile] = useState(false);
+  const [showSidebarDesktop, setShowSidebarDesktop] = useState(true);
+
+  // Android & iOS Swipe Gestures:
+  // Swipe Right from screen edge opens sidebar; Swipe Left anywhere closes mobile sidebar.
+  useSwipeGesture({
+    onSwipeRight: () => {
+      if (!showSidebarMobile) {
+        setShowSidebarMobile(true);
+      }
+    },
+    onSwipeLeft: () => {
+      if (showSidebarMobile) {
+        setShowSidebarMobile(false);
+      }
+    },
+    edgeOnly: !showSidebarMobile,
+  });
 
   useEffect(() => {
     async function checkAuth() {
@@ -625,6 +643,24 @@ export default function ChatPage({ params }: ChatPageProps) {
     }
   };
 
+  // Leave Group Chat (Member)
+  const handleLeaveGroup = async () => {
+    if (!currentParticipant) return;
+    clearClientChatState();
+    const res = await fetch(`/api/participants/${currentParticipant.anonymousId}?chatId=${chatId}`, {
+      method: "DELETE",
+    });
+
+    if (res.ok) {
+      const remaining = managedChats.filter((c) => c.id !== chatId);
+      if (remaining.length > 0) {
+        router.replace(`/chat/${remaining[0].id}`);
+      } else {
+        router.replace("/");
+      }
+    }
+  };
+
   // Remove Participant (Host)
   const handleRemoveParticipant = async (participantId: string) => {
     const res = await fetch(`/api/participants/${participantId}?chatId=${chatId}`, {
@@ -699,23 +735,39 @@ export default function ChatPage({ params }: ChatPageProps) {
       <div className="absolute top-0 left-1/4 w-[400px] h-[300px] rounded-full bg-indigo-500/5 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-[400px] h-[300px] rounded-full bg-cyan-500/5 blur-[120px] pointer-events-none" />
 
+      {/* Mobile Backdrop Overlay for ChatSidebar */}
+      {showSidebarMobile && (
+        <div
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-35 md:hidden transition-opacity"
+          onClick={() => setShowSidebarMobile(false)}
+        />
+      )}
+
       {/* 1. Left Column: Chat Sidebar (Desktop for all users; Mobile Drawer when toggled) */}
-      <ChatSidebar
-        currentChatId={chatId}
-        managedChats={
-          managedChats.length > 0
-            ? managedChats
-            : [{ id: chatId, name: chat.name, icon: chat.icon, type: chat.type }]
-        }
-        currentUser={currentUser}
-        onOpenAuthModal={() => setAuthModalOpen(true)}
-        onOpenManagedDrawer={() => setManagedDrawerOpen(true)}
-        className={`${
-          showSidebarMobile
-            ? "flex fixed inset-y-0 left-0 z-40"
-            : "hidden md:flex"
-        }`}
-      />
+      {(showSidebarDesktop || showSidebarMobile) && (
+        <ChatSidebar
+          currentChatId={chatId}
+          managedChats={
+            managedChats.length > 0
+              ? managedChats
+              : [{ id: chatId, name: chat.name, icon: chat.icon, type: chat.type }]
+          }
+          currentUser={currentUser}
+          onOpenAuthModal={() => setAuthModalOpen(true)}
+          onOpenManagedDrawer={() => setManagedDrawerOpen(true)}
+          onClose={() => {
+            if (showSidebarMobile) setShowSidebarMobile(false);
+            else setShowSidebarDesktop(false);
+          }}
+          className={`${
+            showSidebarMobile
+              ? "flex fixed inset-y-0 left-0 z-40 w-[85vw] max-w-xs shadow-2xl animate-in slide-in-from-left duration-200"
+              : showSidebarDesktop
+              ? "hidden md:flex transition-all duration-300"
+              : "hidden"
+          }`}
+        />
+      )}
 
       {/* 2. Middle Column: Active Chat Feed */}
       <div className="flex-1 flex flex-col h-full overflow-hidden relative">
@@ -730,7 +782,10 @@ export default function ChatPage({ params }: ChatPageProps) {
           onOpenDrawer={() => setDrawerOpen(true)}
           onOpenQR={() => setQrModalOpen(true)}
           onToggleGroupInfo={() => setShowGroupInfo(!showGroupInfo)}
-          onToggleSidebar={() => setShowSidebarMobile(!showSidebarMobile)}
+          onToggleSidebar={() => {
+            setShowSidebarMobile(!showSidebarMobile);
+            setShowSidebarDesktop(!showSidebarDesktop);
+          }}
         />
 
         {/* Scrollable Message List */}
@@ -769,16 +824,25 @@ export default function ChatPage({ params }: ChatPageProps) {
         </div>
       </div>
 
-      {/* 3. Right Column: Group Info & Members Panel (Only for Group Chats) */}
+      {/* 3. Right Column: Group Info & Members Panel (Slide-over on Mobile, 3rd column on Desktop) */}
       {chat.type === "group" && showGroupInfo && (
-        <GroupInfoPanel
-          chat={chat}
-          participants={participants as unknown as IParticipant[]}
-          messages={messages}
-          currentParticipantId={currentParticipant.anonymousId}
-          onClose={() => setShowGroupInfo(false)}
-          className="hidden lg:flex"
-        />
+        <>
+          {/* Mobile Backdrop Overlay for GroupInfoPanel */}
+          <div
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-35 lg:hidden transition-opacity"
+            onClick={() => setShowGroupInfo(false)}
+          />
+          <GroupInfoPanel
+            chat={chat}
+            participants={participants as unknown as IParticipant[]}
+            messages={messages}
+            currentParticipantId={currentParticipant.anonymousId}
+            onClose={() => setShowGroupInfo(false)}
+            onEndChat={handleEndChat}
+            onLeaveGroup={handleLeaveGroup}
+            className="fixed inset-y-0 right-0 z-40 w-[85vw] max-w-xs lg:static lg:w-80 lg:z-auto shadow-2xl lg:shadow-none"
+          />
+        </>
       )}
 
       {/* Auth & Managed Drawers / Modals */}
@@ -834,6 +898,7 @@ export default function ChatPage({ params }: ChatPageProps) {
         }}
         onRegenerateLink={handleRegenerateLink}
         onEndChat={handleEndChat}
+        onLeaveGroup={handleLeaveGroup}
         onRemoveParticipant={handleRemoveParticipant}
         onUpdateGroupSettings={handleUpdateGroupSettings}
       />

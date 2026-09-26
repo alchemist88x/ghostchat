@@ -66,8 +66,7 @@ export function MediaContainer({
     <>
       <div
         onClick={handleContainerClick}
-        style={{ aspectRatio: `${aspectRatio}` }}
-        className={`relative w-full max-w-sm rounded-2xl overflow-hidden cursor-pointer group bg-slate-900 border border-slate-800 shadow-md transition-all ${
+        className={`relative w-[190px] xs:w-[210px] sm:w-[230px] h-[130px] xs:h-[142px] sm:h-[155px] rounded-2xl overflow-hidden cursor-pointer group bg-slate-900 shadow-sm transition-all flex-shrink-0 ${
           isFailed ? "ring-2 ring-red-500/50" : ""
         }`}
       >

@@ -62,6 +62,9 @@ export async function POST(req: NextRequest) {
     const chatInsertResult = await chatsCol.insertOne(newChat);
     const chatId = chatInsertResult.insertedId.toString();
 
+    // Check authenticated user
+    const currentUser = await getCurrentUser();
+
     // Create Creator Participant document
     const creatorParticipant: IParticipant = {
       chatId,
@@ -71,6 +74,8 @@ export async function POST(req: NextRequest) {
       joinedAt: now,
       lastSeenAt: now,
       sessionHash,
+      userId: currentUser?.id,
+      username: currentUser?.username,
     };
 
     const participantInsertResult = await participantsCol.insertOne(creatorParticipant);
@@ -81,7 +86,6 @@ export async function POST(req: NextRequest) {
     );
 
     // If logged in as registered user, link chat to managedChatIds
-    const currentUser = await getCurrentUser();
     if (currentUser && currentUser.username) {
       const usersCol = db.collection("users");
       await usersCol.updateOne(

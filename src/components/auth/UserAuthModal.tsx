@@ -201,7 +201,7 @@ export function UserAuthModal({
               </div>
 
               <p className="text-[11px] text-slate-400 leading-relaxed">
-                Save this code safely! If you ever forget your password, enter this 6-digit code (or default 123456) to recover your account.
+                Save this code safely! If you ever forget your password, enter this 6-digit code to recover your account.
               </p>
             </div>
 
@@ -325,7 +325,7 @@ export function UserAuthModal({
                         type="text"
                         value={recoveryCodeInput}
                         onChange={(e) => setRecoveryCodeInput(e.target.value)}
-                        placeholder="e.g. 123456 or your 6-digit code"
+                        placeholder="Enter your 6-digit recovery code"
                         required
                         maxLength={6}
                         className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-mono"
@@ -406,7 +406,7 @@ export function UserAuthModal({
 
             <p className="text-[11px] text-slate-500 text-center mt-4">
               {mode === "forgot"
-                ? "Default code 123456 is supported for password recovery."
+                ? "Enter your 6-digit recovery code generated during registration."
                 : "Note: User registration is 100% optional. Guest users can chat freely."}
             </p>
           </>

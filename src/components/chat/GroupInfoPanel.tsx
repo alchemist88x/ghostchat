@@ -11,7 +11,9 @@ import {
   Music,
   Link2,
   Mic,
-  ShieldAlert,
+  Trash2,
+  LogOut,
+  PowerOff,
 } from "lucide-react";
 import { IChat, IParticipant, IMessage } from "@/types";
 import { getAvatarForName } from "@/lib/names";
@@ -22,6 +24,8 @@ interface GroupInfoPanelProps {
   messages: IMessage[];
   currentParticipantId: string;
   onClose: () => void;
+  onEndChat?: () => Promise<void>;
+  onLeaveGroup?: () => Promise<void>;
   className?: string;
 }
 
@@ -31,9 +35,18 @@ export function GroupInfoPanel({
   messages,
   currentParticipantId,
   onClose,
+  onEndChat,
+  onLeaveGroup,
   className = "",
 }: GroupInfoPanelProps) {
   const [filesExpanded, setFilesExpanded] = useState(true);
+  const [confirmAction, setConfirmAction] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const currentParticipant = participants.find(
+    (p) => p.anonymousId === currentParticipantId
+  );
+  const isCreator = currentParticipant?.isCreator || false;
 
   // Extract media items from messages
   const imageMessages = messages.filter(
@@ -55,7 +68,6 @@ export function GroupInfoPanel({
     (m) => m.attachments?.some((a) => a.mimeType?.startsWith("audio/")) || m.type === "voice"
   );
 
-  // Sample image URLs for grid preview
   const photoPreviews = imageMessages
     .slice(0, 4)
     .map((m) => m.attachments?.[0]?.publicUrl || m.content)
@@ -95,7 +107,6 @@ export function GroupInfoPanel({
 
           {filesExpanded && (
             <div className="space-y-3 pt-1">
-              {/* Photos Grid Item */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
                   <div className="flex items-center gap-2">
@@ -105,7 +116,6 @@ export function GroupInfoPanel({
                   <ChevronUp className="w-3.5 h-3.5 text-slate-400" />
                 </div>
 
-                {/* Photo Previews */}
                 {photoPreviews.length > 0 ? (
                   <div className="grid grid-cols-2 gap-2">
                     {photoPreviews.map((src, i) => (
@@ -122,7 +132,6 @@ export function GroupInfoPanel({
                 )}
               </div>
 
-              {/* Accordion File Rows */}
               <div className="space-y-2.5 pt-1 text-xs text-slate-600 dark:text-slate-400">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -214,6 +223,90 @@ export function GroupInfoPanel({
           })}
         </div>
       </div>
+
+      {/* 3. Group Delete / Leave Actions */}
+      <div className="rounded-3xl bg-rose-500/10 border border-rose-500/20 p-4 space-y-3 shrink-0">
+        <h4 className="text-xs font-extrabold uppercase tracking-wider text-rose-500 dark:text-rose-400">
+          Group Actions
+        </h4>
+
+        {isCreator ? (
+          confirmAction ? (
+            <div className="space-y-2 text-center">
+              <p className="text-xs text-rose-600 dark:text-rose-300 font-semibold">
+                Permanently delete this group chat for everyone?
+              </p>
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setConfirmAction(false)}
+                  className="flex-1 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setIsSubmitting(true);
+                    if (onEndChat) await onEndChat();
+                  }}
+                  disabled={isSubmitting}
+                  className="flex-1 py-2 rounded-xl bg-rose-600 text-xs font-bold text-white hover:bg-rose-500 transition-colors"
+                >
+                  {isSubmitting ? "Deleting..." : "Delete Chat"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmAction(true)}
+              className="w-full py-2.5 px-3 rounded-2xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center justify-center gap-2 border border-rose-500/30 transition-all"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Delete Group Chat</span>
+            </button>
+          )
+        ) : (
+          confirmAction ? (
+            <div className="space-y-2 text-center">
+              <p className="text-xs text-rose-600 dark:text-rose-300 font-semibold">
+                Leave this group chat? You will be removed from members.
+              </p>
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setConfirmAction(false)}
+                  className="flex-1 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setIsSubmitting(true);
+                    if (onLeaveGroup) await onLeaveGroup();
+                  }}
+                  disabled={isSubmitting}
+                  className="flex-1 py-2 rounded-xl bg-rose-600 text-xs font-bold text-white hover:bg-rose-500 transition-colors"
+                >
+                  {isSubmitting ? "Leaving..." : "Leave Group"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmAction(true)}
+              className="w-full py-2.5 px-3 rounded-2xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center justify-center gap-2 border border-rose-500/30 transition-all"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Leave Group Chat</span>
+            </button>
+          )
+        )}
+      </div>
     </aside>
   );
 }
+

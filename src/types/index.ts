@@ -26,6 +26,7 @@ export interface IParticipant {
   joinedAt: Date;
   lastSeenAt: Date;
   sessionHash: string;
+  userId?: string;
   username?: string;
 }
 

@@ -73,11 +73,54 @@ export async function authorizeParticipant(
     };
   }
 
-  // Find participant record matching this chat and the secure sessionHash
-  const participant = (await participantsCol.findOne({
+  // Import getCurrentUser helper dynamically to avoid circular dependencies
+  const { getCurrentUser } = await import("./userAuth");
+  const currentUser = await getCurrentUser();
+
+  const orConditions: Record<string, unknown>[] = [];
+  if (sessionHash) {
+    orConditions.push({ sessionHash });
+  }
+  if (currentUser) {
+    if (currentUser.id) orConditions.push({ userId: currentUser.id });
+    if (currentUser.username) orConditions.push({ username: currentUser.username });
+  }
+
+  if (orConditions.length === 0) {
+    return {
+      auth: null,
+      failure: { error: "No session or account credentials found.", status: 401 },
+    };
+  }
+
+  // Find participant record matching this chat and either secure sessionHash or registered account
+  let participant = (await participantsCol.findOne({
     chatId: chat._id.toString(),
-    sessionHash,
+    $or: orConditions,
   })) as (IParticipant & { _id: ObjectId }) | null;
+
+  // Fallback: If user is logged in and owns/manages this chat but participant record lacks userId/username
+  if (!participant && currentUser && currentUser.managedChatIds?.includes(chat._id.toString())) {
+    participant = (await participantsCol.findOne({
+      chatId: chat._id.toString(),
+      isCreator: true,
+    })) as (IParticipant & { _id: ObjectId }) | null;
+
+    if (participant && sessionHash) {
+      // Bind current device sessionHash & user details to participant record
+      await participantsCol.updateOne(
+        { _id: participant._id },
+        {
+          $set: {
+            sessionHash,
+            userId: currentUser.id,
+            username: currentUser.username,
+            lastSeenAt: new Date(),
+          },
+        }
+      );
+    }
+  }
 
   if (!participant) {
     return {
@@ -93,9 +136,18 @@ export async function authorizeParticipant(
     };
   }
 
-  // Silently touch lastSeenAt
+  // Touch lastSeenAt and ensure sessionHash & user details are synced to current device
+  const updatePayload: Record<string, unknown> = { lastSeenAt: new Date() };
+  if (sessionHash && participant.sessionHash !== sessionHash) {
+    updatePayload.sessionHash = sessionHash;
+  }
+  if (currentUser && !participant.username) {
+    updatePayload.username = currentUser.username;
+    if (currentUser.id) updatePayload.userId = currentUser.id;
+  }
+
   participantsCol
-    .updateOne({ _id: participant._id }, { $set: { lastSeenAt: new Date() } })
+    .updateOne({ _id: participant._id }, { $set: updatePayload })
     .catch(() => {});
 
   return {

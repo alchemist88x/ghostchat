@@ -2,10 +2,11 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Search, Pin, MessageSquare, Plus, Shield, User, LogOut, Settings } from "lucide-react";
+import { Search, Pin, MessageSquare, Plus, Shield, User, LogOut, Settings, Smartphone, PanelLeftClose, ChevronLeft } from "lucide-react";
 import { IChat } from "@/types";
 import { getAvatarForName } from "@/lib/names";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { triggerPwaInstall } from "@/components/ui/InstallPwaPrompt";
 
 interface ChatSidebarProps {
   currentChatId: string;
@@ -13,6 +14,7 @@ interface ChatSidebarProps {
   currentUser: { id: string; username: string } | null;
   onOpenAuthModal: () => void;
   onOpenManagedDrawer: () => void;
+  onClose?: () => void;
   className?: string;
 }
 
@@ -22,6 +24,7 @@ export function ChatSidebar({
   currentUser,
   onOpenAuthModal,
   onOpenManagedDrawer,
+  onClose,
   className = "",
 }: ChatSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -32,8 +35,11 @@ export function ChatSidebar({
 
   return (
     <aside
-      className={`w-80 border-r border-slate-200 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl flex flex-col justify-between h-full shrink-0 ${className}`}
+      className={`w-80 border-r border-slate-200 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/90 backdrop-blur-xl flex flex-col justify-between h-full shrink-0 select-none transition-all duration-300 ${className}`}
     >
+      {/* Mobile Touch Handle Indicator */}
+      <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto mt-2 -mb-2 md:hidden" />
+
       {/* Search Header */}
       <div className="p-4 border-b border-slate-200 dark:border-slate-800/60 space-y-3">
         <div className="flex items-center justify-between">
@@ -46,6 +52,14 @@ export function ChatSidebar({
             </span>
           </Link>
           <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => triggerPwaInstall()}
+              className="p-1.5 rounded-xl text-slate-500 hover:text-indigo-500 hover:bg-indigo-500/10 transition-colors"
+              title="Install Web App on Phone / Desktop"
+            >
+              <Smartphone className="w-4 h-4 text-indigo-400" />
+            </button>
             <ThemeToggle className="p-1.5" />
             <Link
               href="/chat/new"
@@ -54,6 +68,16 @@ export function ChatSidebar({
             >
               <Plus className="w-4 h-4" />
             </Link>
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                title="Collapse / Close Sidebar"
+              >
+                <PanelLeftClose className="w-4.5 h-4.5" />
+              </button>
+            )}
           </div>
         </div>
 

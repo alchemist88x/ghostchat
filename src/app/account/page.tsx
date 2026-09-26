@@ -191,10 +191,10 @@ export default function AccountPage() {
         <div className="p-6 rounded-3xl bg-card/60 border border-border/60 shadow-sm space-y-3">
           <div className="flex items-center gap-2 text-sm font-bold text-foreground">
             <ShieldAlert className="w-4 h-4 text-indigo-400" />
-            <span>Password Recovery & Default Code</span>
+            <span>Password Recovery Security Code</span>
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Your account is protected by a 6-digit recovery security code. In addition to your custom code generated at registration, the default fallback code <code className="px-1.5 py-0.5 rounded bg-secondary font-mono text-indigo-400 font-bold">123456</code> is also supported for password recovery.
+            Your account is protected by your unique 6-digit recovery security code generated during registration. Keep it safe in case you need to recover your password.
           </p>
         </div>
 

@@ -38,7 +38,7 @@ export function EmojiPickerPopover({ onSelectEmoji, onClose }: EmojiPickerProps)
   return (
     <div
       onClick={(e) => e.stopPropagation()}
-      className="absolute bottom-full left-0 mb-3 w-80 sm:w-88 rounded-3xl bg-card/95 border border-border/80 shadow-2xl backdrop-blur-xl p-3 z-50 flex flex-col gap-2 animate-fade-in"
+      className="absolute bottom-full left-0 mb-3 w-[calc(100vw-2.5rem)] max-w-[320px] sm:max-w-xs rounded-3xl bg-card/95 border border-border/80 shadow-2xl backdrop-blur-xl p-3 z-50 flex flex-col gap-2 animate-fade-in"
     >
       {/* Search Input */}
       <div className="relative">

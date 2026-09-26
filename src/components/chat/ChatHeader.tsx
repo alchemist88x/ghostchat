@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { ArrowLeft, MoreVertical, QrCode, Search, Phone, Sliders } from "lucide-react";
+import { ArrowLeft, MoreVertical, QrCode, Search, Phone, Sliders, PanelLeft } from "lucide-react";
 import { IChat } from "@/types";
 import { ConnectionBadge } from "./ConnectionBadge";
 import { ExpirationCountdown } from "./ExpirationCountdown";
@@ -68,10 +68,10 @@ export function ChatHeader({
             <button
               onClick={onToggleSidebar}
               type="button"
-              className="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors md:hidden"
-              title="Toggle Chat List"
+              className="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center"
+              title="Toggle / Collapse Chat Sidebar"
             >
-              <Sliders className="w-4 h-4" />
+              <PanelLeft className="w-4.5 h-4.5" />
             </button>
           )}
 

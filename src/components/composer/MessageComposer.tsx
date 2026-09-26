@@ -14,11 +14,13 @@ import {
   FileText,
   Camera,
   Film,
+  Sparkles,
 } from "lucide-react";
 import { EmojiPickerPopover } from "./EmojiPickerPopover";
 import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
 import { useUpload } from "@/hooks/useUpload";
 import { IAttachment, IReplyTo, MessageType } from "@/types";
+import { CameraModal } from "../media/CameraModal";
 
 interface MessageComposerProps {
   chatId: string;
@@ -45,6 +47,7 @@ export function MessageComposer({
   const [content, setContent] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
+  const [showCameraModal, setShowCameraModal] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -192,6 +195,48 @@ export function MessageComposer({
       resetProgress();
       if (e.target) e.target.value = "";
     }
+  };
+
+  // Custom Live Camera Capture Handler (Background Upload)
+  const handleCameraCapture = async (file: File, type: "image" | "file") => {
+    const isVideo = file.type.startsWith("video/");
+    const actualType: MessageType = isVideo ? "video" : "image";
+
+    // Extract blur placeholder and aspect ratio asynchronously
+    const { blurDataUrl, aspectRatio } = await generateMediaPreview(file).catch(() => ({
+      blurDataUrl: undefined,
+      aspectRatio: isVideo ? 16 / 9 : 1,
+    }));
+
+    // Start background file upload to S3 / Cloudflare R2 / Server storage
+    uploadFile(file, {
+      type: actualType,
+      originalName: file.name,
+      mimeType: file.type,
+    })
+      .then(async (attachment) => {
+        if (attachment) {
+          await onSendMessage({
+            type: actualType,
+            content: isVideo ? "Camera Video" : "Camera Photo",
+            replyTo: replyingTo || undefined,
+            attachments: [
+              {
+                ...attachment,
+                blurDataUrl,
+                aspectRatio: aspectRatio || (isVideo ? 16 / 9 : 1),
+              },
+            ],
+          });
+          if (replyingTo) onCancelReply();
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to upload camera capture in background:", err);
+      })
+      .finally(() => {
+        resetProgress();
+      });
   };
 
   // Voice recording send
@@ -374,19 +419,19 @@ export function MessageComposer({
               {showAttachMenu && (
                 <div
                   onClick={(e) => e.stopPropagation()}
-                  className="absolute bottom-full left-0 mb-3 w-56 rounded-2xl bg-card border border-border/80 shadow-2xl p-1.5 z-50 flex flex-col gap-1 backdrop-blur-xl animate-fade-in"
+                  className="absolute bottom-full left-0 mb-3 w-60 max-w-[calc(100vw-2.5rem)] rounded-2xl bg-card border border-border/80 shadow-2xl p-1.5 z-50 flex flex-col gap-1 backdrop-blur-xl animate-fade-in"
                 >
-                  {/* Triggers Native Camera App directly */}
+                  {/* Camera Option */}
                   <button
                     type="button"
                     onClick={() => {
                       setShowAttachMenu(false);
-                      cameraInputRef.current?.click();
+                      setShowCameraModal(true);
                     }}
-                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-foreground hover:bg-secondary transition-colors"
+                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 transition-colors"
                   >
-                    <Camera className="w-4 h-4 text-rose-400 shrink-0" />
-                    <span>Native Camera (Take Photo / Video)</span>
+                    <Camera className="w-4 h-4 text-indigo-400 shrink-0" />
+                    <span>Camera (Photo & Video)</span>
                   </button>
 
                   <button
@@ -471,6 +516,15 @@ export function MessageComposer({
           </div>
         )}
       </div>
+
+      {/* Snapchat Custom Camera Modal */}
+      {showCameraModal && (
+        <CameraModal
+          isOpen={showCameraModal}
+          onClose={() => setShowCameraModal(false)}
+          onCapture={handleCameraCapture}
+        />
+      )}
     </div>
   );
 }

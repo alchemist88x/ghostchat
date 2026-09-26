@@ -18,11 +18,13 @@ import {
   MessageCircle,
   CheckCircle2,
   User,
+  Smartphone,
 } from "lucide-react";
 import { IChat } from "@/types";
 import { ExpirationCountdown } from "./ExpirationCountdown";
 import { getAvatarForName } from "@/lib/names";
 import { getChatDisplayName } from "./ChatHeader";
+import { triggerPwaInstall } from "../ui/InstallPwaPrompt";
 
 interface ChatDrawerProps {
   isOpen: boolean;
@@ -46,6 +48,7 @@ interface ChatDrawerProps {
   onOpenReport: () => void;
   onRegenerateLink: () => Promise<void>;
   onEndChat: () => Promise<void>;
+  onLeaveGroup?: () => Promise<void>;
   onRemoveParticipant: (id: string) => Promise<void>;
   onUpdateGroupSettings?: (settings: { name?: string; icon?: string; maxParticipants?: number }) => Promise<void>;
 }
@@ -62,6 +65,7 @@ export function ChatDrawer({
   onOpenReport,
   onRegenerateLink,
   onEndChat,
+  onLeaveGroup,
   onRemoveParticipant,
   onUpdateGroupSettings,
 }: ChatDrawerProps) {
@@ -533,6 +537,15 @@ export function ChatDrawer({
                     <span>Show QR Code</span>
                   </button>
                 </div>
+
+                <button
+                  onClick={() => triggerPwaInstall()}
+                  type="button"
+                  className="w-full py-2.5 px-3 rounded-2xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-xs font-bold flex items-center justify-center gap-2 transition-colors"
+                >
+                  <Smartphone className="w-4 h-4" />
+                  <span>Install Web App on Phone</span>
+                </button>
               </div>
             </div>
           )}
@@ -540,7 +553,7 @@ export function ChatDrawer({
 
         {/* Bottom Actions Footer */}
         <div className="p-4 border-t border-border/40 bg-card/90 backdrop-blur-md space-y-2">
-          {(currentParticipant.isCreator || chat.type === "personal") && (
+          {currentParticipant.isCreator || chat.type === "personal" ? (
             confirmEnd ? (
               <div className="p-3 rounded-2xl bg-destructive/10 border border-destructive/20 text-center space-y-2">
                 <p className="text-xs text-destructive font-semibold">
@@ -572,7 +585,42 @@ export function ChatDrawer({
                 className="w-full py-2.5 px-3 rounded-2xl bg-destructive/10 hover:bg-destructive/20 text-destructive text-xs font-bold flex items-center justify-center gap-2 transition-colors"
               >
                 <PowerOff className="w-4 h-4" />
-                <span>End GhostChat</span>
+                <span>Delete / End GhostChat</span>
+              </button>
+            )
+          ) : (
+            confirmEnd ? (
+              <div className="p-3 rounded-2xl bg-destructive/10 border border-destructive/20 text-center space-y-2">
+                <p className="text-xs text-destructive font-semibold">
+                  Leave group chat? You will be removed from member list.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setConfirmEnd(false)}
+                    className="flex-1 py-2 rounded-xl bg-secondary text-xs font-medium text-foreground"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      setIsEnding(true);
+                      if (onLeaveGroup) await onLeaveGroup();
+                    }}
+                    disabled={isEnding}
+                    className="flex-1 py-2 rounded-xl bg-destructive text-destructive-foreground text-xs font-bold hover:bg-destructive/90"
+                  >
+                    {isEnding ? "Leaving..." : "Leave Group"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmEnd(true)}
+                type="button"
+                className="w-full py-2.5 px-3 rounded-2xl bg-destructive/10 hover:bg-destructive/20 text-destructive text-xs font-bold flex items-center justify-center gap-2 transition-colors"
+              >
+                <PowerOff className="w-4 h-4" />
+                <span>Leave Group Chat</span>
               </button>
             )
           )}

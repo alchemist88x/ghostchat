@@ -42,11 +42,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verify recovery code: matches user's recoveryCode OR fallback default "123456"
-    const validCode =
-      (user.recoveryCode && user.recoveryCode === cleanCode) ||
-      (!user.recoveryCode && cleanCode === "123456") ||
-      cleanCode === "123456";
+    // Verify recovery code: matches user's recoveryCode
+    const validCode = Boolean(user.recoveryCode && user.recoveryCode === cleanCode);
 
     if (!validCode) {
       return NextResponse.json(
