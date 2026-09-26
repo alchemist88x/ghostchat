@@ -730,7 +730,7 @@ export default function ChatPage({ params }: ChatPageProps) {
   const joinUrl = typeof window !== "undefined" ? `${window.location.origin}/join/${chat.publicToken}` : "";
 
   return (
-    <div className="h-screen w-full flex bg-background text-foreground overflow-hidden relative">
+    <div className="h-[100dvh] w-full flex bg-background text-foreground overflow-hidden relative">
       {/* Background subtle tint */}
       <div className="absolute top-0 left-1/4 w-[400px] h-[300px] rounded-full bg-indigo-500/5 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-[400px] h-[300px] rounded-full bg-cyan-500/5 blur-[120px] pointer-events-none" />
@@ -770,26 +770,28 @@ export default function ChatPage({ params }: ChatPageProps) {
       )}
 
       {/* 2. Middle Column: Active Chat Feed */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden relative">
-        {/* Fixed Chat Header */}
-        <ChatHeader
-          chat={chat}
-          currentParticipant={currentParticipant}
-          participants={participants}
-          participantCount={participants.length}
-          onlineCount={onlineParticipantIds.size}
-          connectionStatus={connectionStatus}
-          onOpenDrawer={() => setDrawerOpen(true)}
-          onOpenQR={() => setQrModalOpen(true)}
-          onToggleGroupInfo={() => setShowGroupInfo(!showGroupInfo)}
-          onToggleSidebar={() => {
-            setShowSidebarMobile(!showSidebarMobile);
-            setShowSidebarDesktop(!showSidebarDesktop);
-          }}
-        />
+      <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden relative">
+        {/* Fixed Top Bar Chat Header */}
+        <div className="w-full shrink-0 z-30">
+          <ChatHeader
+            chat={chat}
+            currentParticipant={currentParticipant}
+            participants={participants}
+            participantCount={participants.length}
+            onlineCount={onlineParticipantIds.size}
+            connectionStatus={connectionStatus}
+            onOpenDrawer={() => setDrawerOpen(true)}
+            onOpenQR={() => setQrModalOpen(true)}
+            onToggleGroupInfo={() => setShowGroupInfo(!showGroupInfo)}
+            onToggleSidebar={() => {
+              setShowSidebarMobile(!showSidebarMobile);
+              setShowSidebarDesktop(!showSidebarDesktop);
+            }}
+          />
+        </div>
 
-        {/* Scrollable Message List */}
-        <main className="flex-1 w-full flex flex-col overflow-hidden relative">
+        {/* Scrollable Center Message List */}
+        <main className="flex-1 min-h-0 w-full flex flex-col overflow-hidden relative">
           <MessageList
             messages={messages}
             currentParticipantId={currentParticipant.anonymousId}
@@ -811,8 +813,8 @@ export default function ChatPage({ params }: ChatPageProps) {
           <TypingIndicator users={typingUsers} />
         </main>
 
-        {/* Bottom Message Composer */}
-        <div className="w-full shrink-0 z-30">
+        {/* Fixed Bottom Bar Message Composer */}
+        <div className="w-full shrink-0 z-30 bg-background">
           <MessageComposer
             chatId={chatId}
             onSendMessage={handleSendMessage}

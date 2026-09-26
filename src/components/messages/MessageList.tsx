@@ -81,7 +81,7 @@ export function MessageList({
     <div
       ref={containerRef}
       onScroll={handleScroll}
-      className="flex-1 overflow-y-auto pt-4 pb-24 relative flex flex-col justify-start"
+      className="flex-1 min-h-0 overflow-y-auto pt-4 pb-4 relative flex flex-col justify-start"
     >
       {/* Load More Button for older messages */}
       {hasMoreOlder && (
@@ -153,7 +153,7 @@ export function MessageList({
       {showScrollBottom && (
         <button
           onClick={scrollToBottom}
-          className="fixed bottom-24 right-4 z-30 p-2.5 rounded-full bg-card border border-border/80 text-foreground shadow-xl hover:bg-secondary transition-all active:scale-95 animate-fade-in"
+          className="absolute bottom-4 right-4 z-30 p-2.5 rounded-full bg-card border border-border/80 text-foreground shadow-xl hover:bg-secondary transition-all active:scale-95 animate-fade-in"
           title="Scroll to bottom"
         >
           <ArrowDown className="w-4 h-4" />
