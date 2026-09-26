@@ -389,7 +389,10 @@ export function MessageComposer({
             <div className="relative shrink-0">
               <button
                 type="button"
-                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                onClick={() => {
+                  setShowEmojiPicker((prev) => !prev);
+                  setShowAttachMenu(false);
+                }}
                 className="p-2 sm:p-2.5 rounded-2xl text-muted-foreground hover:text-foreground hover:bg-secondary/70 transition-colors"
                 title="Emoji"
               >
@@ -397,10 +400,16 @@ export function MessageComposer({
               </button>
 
               {showEmojiPicker && (
-                <EmojiPickerPopover
-                  onSelectEmoji={(emoji) => setContent((prev) => prev + emoji)}
-                  onClose={() => setShowEmojiPicker(false)}
-                />
+                <>
+                  <div
+                    className="fixed inset-0 z-40 bg-black/5"
+                    onClick={() => setShowEmojiPicker(false)}
+                  />
+                  <EmojiPickerPopover
+                    onSelectEmoji={(emoji) => setContent((prev) => prev + emoji)}
+                    onClose={() => setShowEmojiPicker(false)}
+                  />
+                </>
               )}
             </div>
 
@@ -408,7 +417,10 @@ export function MessageComposer({
             <div className="relative shrink-0">
               <button
                 type="button"
-                onClick={() => setShowAttachMenu(!showAttachMenu)}
+                onClick={() => {
+                  setShowAttachMenu((prev) => !prev);
+                  setShowEmojiPicker(false);
+                }}
                 className="p-2 sm:p-2.5 rounded-2xl text-muted-foreground hover:text-foreground hover:bg-secondary/70 transition-colors"
                 title="Attach file or photo"
               >
@@ -417,59 +429,65 @@ export function MessageComposer({
 
               {/* Attach Dropdown Menu */}
               {showAttachMenu && (
-                <div
-                  onClick={(e) => e.stopPropagation()}
-                  className="absolute bottom-full left-0 mb-3 w-60 max-w-[calc(100vw-2.5rem)] rounded-2xl bg-card border border-border/80 shadow-2xl p-1.5 z-50 flex flex-col gap-1 backdrop-blur-xl animate-fade-in"
-                >
-                  {/* Camera Option */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowAttachMenu(false);
-                      setShowCameraModal(true);
-                    }}
-                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 transition-colors"
+                <>
+                  <div
+                    className="fixed inset-0 z-40 bg-black/5"
+                    onClick={() => setShowAttachMenu(false)}
+                  />
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute bottom-full left-0 mb-3 w-60 max-w-[calc(100vw-2.5rem)] rounded-2xl bg-card border border-border/80 shadow-2xl p-1.5 z-50 flex flex-col gap-1 backdrop-blur-xl animate-fade-in"
                   >
-                    <Camera className="w-4 h-4 text-indigo-400 shrink-0" />
-                    <span>Camera (Photo & Video)</span>
-                  </button>
+                    {/* Camera Option */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowAttachMenu(false);
+                        setShowCameraModal(true);
+                      }}
+                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 transition-colors"
+                    >
+                      <Camera className="w-4 h-4 text-indigo-400 shrink-0" />
+                      <span>Camera (Photo & Video)</span>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowAttachMenu(false);
-                      imageInputRef.current?.click();
-                    }}
-                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-foreground hover:bg-secondary transition-colors"
-                  >
-                    <ImageIcon className="w-4 h-4 text-cyan-400 shrink-0" />
-                    <span>Photo / Gallery</span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowAttachMenu(false);
+                        setTimeout(() => imageInputRef.current?.click(), 50);
+                      }}
+                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-foreground hover:bg-secondary transition-colors"
+                    >
+                      <ImageIcon className="w-4 h-4 text-cyan-400 shrink-0" />
+                      <span>Photo / Gallery</span>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowAttachMenu(false);
-                      videoInputRef.current?.click();
-                    }}
-                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-foreground hover:bg-secondary transition-colors"
-                  >
-                    <Film className="w-4 h-4 text-purple-400 shrink-0" />
-                    <span>Video Clip</span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowAttachMenu(false);
+                        setTimeout(() => videoInputRef.current?.click(), 50);
+                      }}
+                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-foreground hover:bg-secondary transition-colors"
+                    >
+                      <Film className="w-4 h-4 text-purple-400 shrink-0" />
+                      <span>Video Clip</span>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowAttachMenu(false);
-                      fileInputRef.current?.click();
-                    }}
-                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-foreground hover:bg-secondary transition-colors"
-                  >
-                    <FileText className="w-4 h-4 text-indigo-400 shrink-0" />
-                    <span>Document / File</span>
-                  </button>
-                </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowAttachMenu(false);
+                        setTimeout(() => fileInputRef.current?.click(), 50);
+                      }}
+                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-foreground hover:bg-secondary transition-colors"
+                    >
+                      <FileText className="w-4 h-4 text-indigo-400 shrink-0" />
+                      <span>Document / File</span>
+                    </button>
+                  </div>
+                </>
               )}
             </div>
 

@@ -17,11 +17,32 @@ export function useSwipeGesture({
   onSwipeLeft,
   onSwipeDown,
   onSwipeUp,
-  threshold = 50,
+  threshold = 40,
   edgeOnly = false,
   targetRef,
 }: SwipeGestureOptions) {
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  // Store callbacks in refs to avoid constant listener re-binding
+  const callbacksRef = useRef({
+    onSwipeRight,
+    onSwipeLeft,
+    onSwipeDown,
+    onSwipeUp,
+    threshold,
+    edgeOnly,
+  });
+
+  useEffect(() => {
+    callbacksRef.current = {
+      onSwipeRight,
+      onSwipeLeft,
+      onSwipeDown,
+      onSwipeUp,
+      threshold,
+      edgeOnly,
+    };
+  });
 
   useEffect(() => {
     const element = targetRef?.current || (typeof window !== "undefined" ? document : null);
@@ -34,9 +55,27 @@ export function useSwipeGesture({
       touchStartRef.current = { x: touch.clientX, y: touch.clientY };
     };
 
+    const handleTouchMove = (e: Event) => {
+      if (!touchStartRef.current) return;
+      const touchEvent = e as TouchEvent;
+      if (touchEvent.touches.length !== 1) return;
+
+      const touch = touchEvent.touches[0];
+      const deltaX = touch.clientX - touchStartRef.current.x;
+      const deltaY = touch.clientY - touchStartRef.current.y;
+
+      // If user is swiping horizontally, block the browser's native back/forward history navigation
+      if (Math.abs(deltaX) > Math.abs(deltaY) + 5 && Math.abs(deltaX) > 15) {
+        if (touchEvent.cancelable) {
+          touchEvent.preventDefault();
+        }
+      }
+    };
+
     const handleTouchEnd = (e: Event) => {
       const touchEvent = e as TouchEvent;
       if (!touchStartRef.current || touchEvent.changedTouches.length !== 1) return;
+
       const touch = touchEvent.changedTouches[0];
       const deltaX = touch.clientX - touchStartRef.current.x;
       const deltaY = touch.clientY - touchStartRef.current.y;
@@ -44,34 +83,45 @@ export function useSwipeGesture({
 
       touchStartRef.current = null;
 
-      // Horizontal swipe must be significantly larger than vertical drag
-      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) >= threshold) {
+      const {
+        onSwipeRight: cbRight,
+        onSwipeLeft: cbLeft,
+        onSwipeDown: cbDown,
+        onSwipeUp: cbUp,
+        threshold: tHold,
+        edgeOnly: eOnly,
+      } = callbacksRef.current;
+
+      // Horizontal swipe must be larger than vertical drag
+      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) >= tHold) {
         if (deltaX > 0) {
           // Swipe Right
-          if (!edgeOnly || startX <= 50) {
-            onSwipeRight?.();
+          if (!eOnly || startX <= 50) {
+            cbRight?.();
           }
         } else {
           // Swipe Left
-          onSwipeLeft?.();
+          cbLeft?.();
         }
-      } else if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) >= threshold) {
+      } else if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) >= tHold) {
         if (deltaY > 0) {
           // Swipe Down
-          onSwipeDown?.();
+          cbDown?.();
         } else {
           // Swipe Up
-          onSwipeUp?.();
+          cbUp?.();
         }
       }
     };
 
     element.addEventListener("touchstart", handleTouchStart, { passive: true });
+    element.addEventListener("touchmove", handleTouchMove, { passive: false });
     element.addEventListener("touchend", handleTouchEnd, { passive: true });
 
     return () => {
       element.removeEventListener("touchstart", handleTouchStart);
+      element.removeEventListener("touchmove", handleTouchMove);
       element.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [onSwipeRight, onSwipeLeft, onSwipeDown, onSwipeUp, threshold, edgeOnly, targetRef]);
+  }, [targetRef]);
 }

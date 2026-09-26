@@ -735,7 +735,7 @@ export default function ChatPage({ params }: ChatPageProps) {
   const joinUrl = typeof window !== "undefined" ? `${window.location.origin}/join/${chat.publicToken}` : "";
 
   return (
-    <div className="h-[100dvh] w-full flex bg-background text-foreground overflow-hidden relative">
+    <div className="h-[100dvh] w-full flex bg-background text-foreground overflow-hidden relative touch-pan-y overscroll-x-contain">
       {/* Background subtle tint */}
       <div className="absolute top-0 left-1/4 w-[400px] h-[300px] rounded-full bg-indigo-500/5 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-[400px] h-[300px] rounded-full bg-cyan-500/5 blur-[120px] pointer-events-none" />

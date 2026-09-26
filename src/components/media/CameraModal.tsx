@@ -105,25 +105,18 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
     onClose();
   }, [stream, previewUrl, onClose]);
 
-  // Intercept Browser Back Gestures (Android Hardware Back & iOS Edge Swipe)
+  // Handle Keyboard Escape key to close camera modal safely without touching browser history
   useEffect(() => {
     if (!isOpen) return;
 
-    // Push dummy history entry so back gesture closes camera instead of exiting website
-    window.history.pushState({ modal: "camera" }, "", window.location.href);
-
-    const handlePopState = () => {
-      handleClose();
-    };
-
-    window.addEventListener("popstate", handlePopState);
-
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-      if (typeof window !== "undefined" && window.history.state?.modal === "camera") {
-        window.history.back();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        handleClose();
       }
     };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, handleClose]);
 
   // Touch Swipe Gesture (Swipe Down / Swipe Right to return to chat)
