@@ -94,9 +94,7 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
     };
   }, [isOpen, facingMode, previewUrl]);
 
-  if (!isOpen || !mounted) return null;
-
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (stream) {
       stream.getTracks().forEach((t) => t.stop());
     }
@@ -105,6 +103,50 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
     setCapturedBlob(null);
     setIsRecording(false);
     onClose();
+  }, [stream, previewUrl, onClose]);
+
+  // Intercept Browser Back Gestures (Android Hardware Back & iOS Edge Swipe)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Push dummy history entry so back gesture closes camera instead of exiting website
+    window.history.pushState({ modal: "camera" }, "", window.location.href);
+
+    const handlePopState = () => {
+      handleClose();
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      if (typeof window !== "undefined" && window.history.state?.modal === "camera") {
+        window.history.back();
+      }
+    };
+  }, [isOpen, handleClose]);
+
+  // Touch Swipe Gesture (Swipe Down / Swipe Right to return to chat)
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartRef.current || e.changedTouches.length !== 1) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartRef.current.x;
+    const deltaY = e.changedTouches[0].clientY - touchStartRef.current.y;
+    touchStartRef.current = null;
+
+    if (
+      (deltaX > 75 && Math.abs(deltaX) > Math.abs(deltaY)) ||
+      (deltaY > 85 && Math.abs(deltaY) > Math.abs(deltaX))
+    ) {
+      handleClose();
+    }
   };
 
   const toggleFacingMode = () => {
@@ -263,9 +305,13 @@ export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
   const progressPercent = (recordSeconds / MAX_RECORD_SECONDS) * 100;
   const strokeDashoffset = 251.2 - (251.2 * progressPercent) / 100;
 
+  if (!isOpen || !mounted) return null;
+
   return createPortal(
     <div
       onClick={handleClose}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       className="fixed inset-0 z-[9999] flex items-center justify-center p-0 bg-black animate-fade-in select-none"
     >
       {/* Hidden File Input for Gallery Picker */}

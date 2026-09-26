@@ -87,11 +87,15 @@ export default function ChatPage({ params }: ChatPageProps) {
   const [showSidebarDesktop, setShowSidebarDesktop] = useState(true);
 
   // Android & iOS Swipe Gestures:
-  // Swipe Right from screen edge opens sidebar; Swipe Left anywhere closes mobile sidebar.
+  // Swipe Right anywhere on the chat feed smoothly reveals the Chat List (Sidebar).
+  // Swipe Left closes the Chat List (Sidebar).
   useSwipeGesture({
     onSwipeRight: () => {
-      if (!showSidebarMobile) {
+      if (showGroupInfo && typeof window !== "undefined" && window.innerWidth < 1024) {
+        setShowGroupInfo(false);
+      } else {
         setShowSidebarMobile(true);
+        setShowSidebarDesktop(true);
       }
     },
     onSwipeLeft: () => {
@@ -99,7 +103,8 @@ export default function ChatPage({ params }: ChatPageProps) {
         setShowSidebarMobile(false);
       }
     },
-    edgeOnly: !showSidebarMobile,
+    edgeOnly: false,
+    threshold: 45,
   });
 
   useEffect(() => {
